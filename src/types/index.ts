@@ -27,6 +27,11 @@ export interface UserProfile {
   url_comprobante?: string | null;
   fecha_nacimiento?: string | null;
   telefono?: string | null;
+  institution_id?: number | null;
+  career_id?: number | null;
+  province_id?: string | null;
+  canton_id?: string | null;
+  can_manage_roles?: boolean;
 }
 
 export interface RegisterResponse {

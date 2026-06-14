@@ -11,6 +11,8 @@ import {
   Pencil,
   RefreshCw,
   Search,
+  Shield,
+  ShieldOff,
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
@@ -22,6 +24,7 @@ import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
 import { fetchInstitutions, fetchProvinces, type Institution, type Province } from "@/lib/catalog";
 import { formatDate } from "@/lib/utils";
+import { useAuth } from "@/store/useAuth";
 import type { AdminActionResponse, AdminMember, AdminMemberListResponse } from "@/types";
 
 const ESTADOS = ["", "ACTIVO", "PENDIENTE", "EXPIRADO", "RECHAZADO"] as const;
@@ -51,6 +54,8 @@ function getApiErrorMessage(error: unknown): string {
 }
 
 export default function AdminMembersPage() {
+  const { user } = useAuth();
+  const canManageRoles = user?.can_manage_roles === true;
   const [members, setMembers] = useState<AdminMember[]>([]);
   const [total, setTotal] = useState(0);
   const [page, setPage] = useState(1);
@@ -148,6 +153,33 @@ export default function AdminMembersPage() {
       setFeedback({ type: "error", message: "No se pudo exportar el Excel." });
     } finally {
       setExporting(false);
+    }
+  }
+
+  async function handleRoleChange(member: AdminMember, newRole: "ADMIN" | "MEMBER") {
+    const actionLabel = newRole === "ADMIN" ? "promover a admin" : "quitar privilegios de admin";
+    const confirmed = window.confirm(
+      `¿Confirmas ${actionLabel} a ${member.nombres} (${member.correo})?`,
+    );
+    if (!confirmed) return;
+
+    setActionLoading(`${member.id}-role`);
+    try {
+      const { data } = await api.patch<AdminMember>(`/admin/members/${member.id}/role`, {
+        rol: newRole,
+      });
+      setMembers((current) => current.map((item) => (item.id === data.id ? data : item)));
+      setFeedback({
+        type: "success",
+        message:
+          newRole === "ADMIN"
+            ? `${member.nombres} ahora es administrador.`
+            : `Se quitaron los privilegios de admin a ${member.nombres}.`,
+      });
+    } catch (error) {
+      setFeedback({ type: "error", message: getApiErrorMessage(error) });
+    } finally {
+      setActionLoading(null);
     }
   }
 
@@ -461,6 +493,34 @@ export default function AdminMembersPage() {
                         >
                           <Pencil className="h-4 w-4" />
                         </Button>
+                        {canManageRoles && member.id !== user?.id && (
+                          <>
+                            {member.rol === "MEMBER" && member.estado_pago === "ACTIVO" && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="secondary"
+                                disabled={Boolean(actionLoading)}
+                                title="Hacer admin"
+                                onClick={() => void handleRoleChange(member, "ADMIN")}
+                              >
+                                <Shield className="h-4 w-4" />
+                              </Button>
+                            )}
+                            {member.rol === "ADMIN" && (
+                              <Button
+                                type="button"
+                                size="sm"
+                                variant="danger"
+                                disabled={Boolean(actionLoading)}
+                                title="Quitar admin"
+                                onClick={() => void handleRoleChange(member, "MEMBER")}
+                              >
+                                <ShieldOff className="h-4 w-4" />
+                              </Button>
+                            )}
+                          </>
+                        )}
                         {member.estado_pago === "PENDIENTE" && (
                           <>
                             <Button

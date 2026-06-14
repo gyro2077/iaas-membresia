@@ -26,7 +26,7 @@ function SettingsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const forcePassword = searchParams.get("forcePassword") === "1";
-  const { user, setAuth, setUser } = useAuth();
+  const { user, setAuth, setUser, token } = useAuth();
 
   const [profileForm, setProfileForm] = useState({
     nombres: "",
@@ -89,9 +89,17 @@ function SettingsContent() {
   }, [provinceId]);
 
   useEffect(() => {
-    if (user?.nombres) {
-      setProfileForm({ nombres: user.nombres });
-    }
+    if (!token) return;
+    void api.get<UserProfile>("/users/me").then(({ data }) => setUser(data));
+  }, [token, setUser]);
+
+  useEffect(() => {
+    if (!user) return;
+    setProfileForm({ nombres: user.nombres });
+    setInstitutionId(user.institution_id ? String(user.institution_id) : "");
+    setCareerId(user.career_id ? String(user.career_id) : "");
+    setProvinceId(user.province_id ?? "");
+    setCantonId(user.canton_id ?? "");
   }, [user]);
 
   async function handleProfileSubmit(event: FormEvent) {
@@ -297,6 +305,9 @@ function SettingsContent() {
                   label: item.name,
                 }))}
               />
+              {!provinceId && user.ciudad && (
+                <p className="mt-1 text-xs text-iaas-earth/70">Actual: {user.ciudad}</p>
+              )}
             </div>
             <div>
               <CatalogSelect
