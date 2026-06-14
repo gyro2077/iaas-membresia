@@ -1,7 +1,7 @@
 "use client";
 
 import { FormEvent, useState } from "react";
-import { Search, ShieldCheck, ShieldX } from "lucide-react";
+import { LogIn, Search, ShieldCheck, ShieldX } from "lucide-react";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -48,12 +48,24 @@ export default function HomePage() {
           Ingresa tu correo institucional para conocer el estado de tu membresía sin necesidad de
           iniciar sesión.
         </p>
-        <p className="mx-auto mt-3 max-w-2xl rounded-lg bg-iaas-light px-4 py-2 text-sm text-iaas-green">
-          ¿Primera vez en la plataforma?{" "}
-          <Link href="/login" className="font-semibold underline-offset-2 hover:underline">
-            Inicia sesión
-          </Link>{" "}
-          con la contraseña temporal <strong>IAAS2026!</strong> — deberás cambiarla al entrar.
+
+        <div className="mx-auto mt-6 flex max-w-md flex-col gap-3 sm:flex-row sm:justify-center">
+          <Link href="/login" className="w-full sm:w-auto">
+            <Button size="lg" className="w-full">
+              <LogIn className="mr-2 h-4 w-4" />
+              Iniciar sesión
+            </Button>
+          </Link>
+          <Link href="/register" className="w-full sm:w-auto">
+            <Button size="lg" variant="secondary" className="w-full">
+              Registrarme
+            </Button>
+          </Link>
+        </div>
+
+        <p className="mx-auto mt-4 max-w-2xl rounded-lg bg-iaas-light px-4 py-2 text-sm text-iaas-green">
+          ¿Primera vez? Usa la contraseña temporal <strong>IAAS2026!</strong> al ingresar — deberás
+          cambiarla en tu primer acceso.
         </p>
       </section>
 

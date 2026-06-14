@@ -1,8 +1,9 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Leaf, LogOut, Shield, User } from "lucide-react";
+import { Leaf, LogIn, LogOut, Shield, User, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
 import { cn } from "@/lib/utils";
@@ -10,8 +11,13 @@ import { selectIsAdmin, useAuth } from "@/store/useAuth";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, token, hydrated, clearAuth } = useAuth();
+  const { user, token, hydrated, hydrate, clearAuth } = useAuth();
   const isAdmin = useAuth(selectIsAdmin);
+  const isAuthenticated = Boolean(token && user);
+
+  useEffect(() => {
+    hydrate();
+  }, [hydrate]);
 
   function handleLogout() {
     clearAuth();
@@ -27,24 +33,28 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-2 text-sm">
-          {hydrated && !token && (
+          {!isAuthenticated && (
             <>
               <Link
                 href="/login"
                 className={cn(
-                  "rounded-lg px-3 py-2 hover:bg-iaas-light",
+                  "inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-iaas-light",
                   pathname === "/login" && "bg-iaas-light text-iaas-green",
                 )}
               >
+                <LogIn className="h-4 w-4" />
                 Ingresar
               </Link>
               <Link href="/register">
-                <Button size="sm">Registrarse</Button>
+                <Button size="sm" variant={pathname === "/register" ? "primary" : "secondary"}>
+                  <UserPlus className="mr-1 h-4 w-4" />
+                  Registrarse
+                </Button>
               </Link>
             </>
           )}
 
-          {hydrated && token && user && (
+          {isAuthenticated && (
             <>
               <Link
                 href="/dashboard"
