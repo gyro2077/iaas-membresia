@@ -120,15 +120,6 @@ export default function HomePage() {
         )}
       </Card>
 
-      <div className="mt-8 flex flex-wrap justify-center gap-3 text-sm">
-        <Link href="/login" className="text-iaas-green underline-offset-4 hover:underline">
-          Iniciar sesión
-        </Link>
-        <span className="text-iaas-earth/40">•</span>
-        <Link href="/register" className="text-iaas-green underline-offset-4 hover:underline">
-          Registrarme como nuevo miembro
-        </Link>
-      </div>
     </div>
   );
 }

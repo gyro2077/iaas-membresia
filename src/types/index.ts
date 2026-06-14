@@ -25,6 +25,43 @@ export interface UserProfile {
   rol: "ADMIN" | "MEMBER";
   debe_cambiar_password: boolean;
   url_comprobante?: string | null;
+  fecha_nacimiento?: string | null;
+  telefono?: string | null;
+}
+
+export interface RegisterResponse {
+  message: string;
+  member: UserProfile;
+}
+
+export interface AdminMember {
+  id: string;
+  fecha_inscripcion: string;
+  nombres: string;
+  institucion: string;
+  carrera: string;
+  ciudad: string;
+  correo: string;
+  telefono: string | null;
+  fecha_nacimiento: string | null;
+  motivacion: string | null;
+  expectativas: string | null;
+  asistio_evento: string | null;
+  evento_parte_favorita: string | null;
+  evento_mejora: string | null;
+  estado_pago: string;
+  url_comprobante: string | null;
+  fecha_expiracion: string;
+  rol: string;
+  active: boolean;
+  days_remaining: number;
+}
+
+export interface AdminMemberListResponse {
+  items: AdminMember[];
+  total: number;
+  page: number;
+  limit: number;
 }
 
 export interface PendingMember {

@@ -58,16 +58,27 @@ export function Navbar() {
                 Dashboard
               </Link>
               {isAdmin && (
-                <Link
-                  href="/admin/pending"
-                  className={cn(
-                    "inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-iaas-light",
-                    pathname.startsWith("/admin") && "bg-iaas-light text-iaas-green",
-                  )}
-                >
-                  <Shield className="h-4 w-4" />
-                  Admin
-                </Link>
+                <>
+                  <Link
+                    href="/admin/members"
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-iaas-light",
+                      pathname.startsWith("/admin/members") && "bg-iaas-light text-iaas-green",
+                    )}
+                  >
+                    <Shield className="h-4 w-4" />
+                    Miembros
+                  </Link>
+                  <Link
+                    href="/admin/pending"
+                    className={cn(
+                      "inline-flex items-center gap-1 rounded-lg px-3 py-2 hover:bg-iaas-light",
+                      pathname.startsWith("/admin/pending") && "bg-iaas-light text-iaas-green",
+                    )}
+                  >
+                    Pendientes
+                  </Link>
+                </>
               )}
               <Button type="button" variant="ghost" size="sm" onClick={() => logoutAndRedirect("/")}>
                 <LogOut className="mr-1 h-4 w-4" />

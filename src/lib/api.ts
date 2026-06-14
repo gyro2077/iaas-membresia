@@ -5,15 +5,15 @@ import { logoutAndRedirect, triggerLogout } from "@/lib/authSession";
 const TOKEN_KEY = "iaas_token";
 
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_API_URL ??
   (process.env.NODE_ENV === "production"
     ? "/api/v1"
     : "http://127.0.0.1:8000/api/v1");
 
 if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
-  if (!process.env.NEXT_PUBLIC_API_URL) {
+  if (baseURL.startsWith("http://127.0.0.1") || baseURL.startsWith("http://localhost")) {
     console.error(
-      "NEXT_PUBLIC_API_URL no está configurada. Las peticiones irán a localhost.",
+      "NEXT_PUBLIC_API_URL apunta a localhost en producción. Usa /api/v1 o el proxy del backend.",
     );
   }
 }
