@@ -5,7 +5,10 @@ import { logoutAndRedirect, triggerLogout } from "@/lib/authSession";
 const TOKEN_KEY = "iaas_token";
 
 const baseURL =
-  process.env.NEXT_PUBLIC_API_URL || "http://127.0.0.1:8000/api/v1";
+  process.env.NEXT_PUBLIC_API_URL ||
+  (process.env.NODE_ENV === "production"
+    ? "/api/v1"
+    : "http://127.0.0.1:8000/api/v1");
 
 if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
   if (!process.env.NEXT_PUBLIC_API_URL) {
