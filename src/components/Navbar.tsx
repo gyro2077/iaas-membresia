@@ -1,28 +1,19 @@
 "use client";
 
-import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { Leaf, LogIn, LogOut, Shield, User, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
+import { logoutAndRedirect } from "@/lib/authSession";
 import { cn } from "@/lib/utils";
 import { selectIsAdmin, useAuth } from "@/store/useAuth";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, token, hydrated, hydrate, clearAuth } = useAuth();
+  const { user, token } = useAuth();
   const isAdmin = useAuth(selectIsAdmin);
   const isAuthenticated = Boolean(token && user);
-
-  useEffect(() => {
-    hydrate();
-  }, [hydrate]);
-
-  function handleLogout() {
-    clearAuth();
-    window.location.href = "/";
-  }
 
   return (
     <header className="border-b border-iaas-earth/10 bg-white/90 backdrop-blur">
@@ -78,7 +69,7 @@ export function Navbar() {
                   Admin
                 </Link>
               )}
-              <Button variant="ghost" size="sm" onClick={handleLogout}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => logoutAndRedirect("/")}>
                 <LogOut className="mr-1 h-4 w-4" />
                 Salir
               </Button>

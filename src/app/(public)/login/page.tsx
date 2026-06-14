@@ -10,7 +10,6 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, setStoredToken } from "@/lib/api";
-import { registerLogoutHandler } from "@/lib/authSession";
 import { useAuth } from "@/store/useAuth";
 import type { TokenResponse, UserProfile } from "@/types";
 
@@ -31,7 +30,6 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
 
   useEffect(() => {
-    registerLogoutHandler(clearAuth);
     clearAuth();
   }, [clearAuth]);
 

@@ -1,6 +1,6 @@
 import axios from "axios";
 
-import { triggerLogout } from "@/lib/authSession";
+import { logoutAndRedirect, triggerLogout } from "@/lib/authSession";
 
 const TOKEN_KEY = "iaas_token";
 
@@ -44,9 +44,10 @@ api.interceptors.response.use(
     const requestUrl: string | undefined = error.config?.url;
 
     if (status === 401 && typeof window !== "undefined" && !isAuthEndpoint(requestUrl)) {
-      triggerLogout();
       if (!window.location.pathname.startsWith("/login")) {
-        window.location.href = "/login";
+        logoutAndRedirect("/login");
+      } else {
+        triggerLogout();
       }
     }
 

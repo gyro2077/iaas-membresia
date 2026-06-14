@@ -13,6 +13,7 @@ export function Button({
 }: ButtonProps) {
   return (
     <button
+      type="button"
       className={cn(
         "inline-flex items-center justify-center rounded-lg font-medium transition focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-iaas-green disabled:cursor-not-allowed disabled:opacity-60",
         variant === "primary" && "bg-iaas-green text-white hover:bg-iaas-green/90",
