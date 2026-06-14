@@ -9,6 +9,7 @@ import axios from "axios";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { PaymentInfo } from "@/components/PaymentInfo";
 import { api } from "@/lib/api";
 import type { RegisterResponse } from "@/types";
 
@@ -293,14 +294,7 @@ export default function RegisterPage() {
             Accede a talleres, semanas de intercambio, capacitaciones, visitas a empresas y programas
             de intercambio. Tu aporte cubre derechos legales y gastos logísticos de la organización.
           </CardDescription>
-          <div className="mt-4 rounded-xl bg-iaas-light px-4 py-4 text-sm text-iaas-earth">
-            <p className="font-semibold text-iaas-green">Datos para pago</p>
-            <ul className="mt-2 space-y-1">
-              <li>Banco Pichincha — Cuenta de Ahorros: 2202367476</li>
-              <li>Titular: Javier Leonardo Silva — CI: 1724920994</li>
-              <li>QR De Una: ANDRE2552</li>
-            </ul>
-          </div>
+          <PaymentInfo />
 
           <div className="mt-4">
             <label className="mb-2 block text-sm font-medium text-iaas-earth">
