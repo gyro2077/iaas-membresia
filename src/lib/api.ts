@@ -1,14 +1,11 @@
 import axios from "axios";
 
 import { logoutAndRedirect, triggerLogout } from "@/lib/authSession";
+import { getApiBaseUrl } from "@/lib/apiBaseUrl";
 
 const TOKEN_KEY = "iaas_token";
 
-const baseURL =
-  process.env.NEXT_PUBLIC_API_URL ??
-  (process.env.NODE_ENV === "production"
-    ? "/api/v1"
-    : "http://127.0.0.1:8000/api/v1");
+const baseURL = getApiBaseUrl();
 
 if (typeof window !== "undefined" && process.env.NODE_ENV === "production") {
   if (baseURL.startsWith("http://127.0.0.1") || baseURL.startsWith("http://localhost")) {
@@ -27,6 +24,9 @@ export const api = axios.create({
 
 api.interceptors.request.use((config) => {
   if (typeof window !== "undefined") {
+    if (isPublicEndpoint(config.url)) {
+      return config;
+    }
     const token = localStorage.getItem(TOKEN_KEY);
     if (token && config.headers && !config.headers.Authorization) {
       config.headers.Authorization = `Bearer ${token}`;
@@ -34,6 +34,11 @@ api.interceptors.request.use((config) => {
   }
   return config;
 });
+
+function isPublicEndpoint(url: string | undefined): boolean {
+  if (!url) return false;
+  return url.includes("/catalog/") || url.includes("/membership/status");
+}
 
 function isAuthEndpoint(url: string | undefined): boolean {
   if (!url) return false;
@@ -46,7 +51,7 @@ api.interceptors.response.use(
     const status = error.response?.status;
     const requestUrl: string | undefined = error.config?.url;
 
-    if (status === 401 && typeof window !== "undefined" && !isAuthEndpoint(requestUrl)) {
+    if (status === 401 && typeof window !== "undefined" && !isAuthEndpoint(requestUrl) && !isPublicEndpoint(requestUrl)) {
       if (!window.location.pathname.startsWith("/login")) {
         logoutAndRedirect("/login");
       } else {

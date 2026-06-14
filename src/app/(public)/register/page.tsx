@@ -56,22 +56,25 @@ export default function RegisterPage() {
   const [careers, setCareers] = useState<Career[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [cantons, setCantons] = useState<{ id: string; name: string }[]>([]);
-  const [catalogLoading, setCatalogLoading] = useState(true);
+  const [provincesLoading, setProvincesLoading] = useState(true);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [careersLoading, setCareersLoading] = useState(false);
+  const [cantonsLoading, setCantonsLoading] = useState(false);
+  const [catalogError, setCatalogError] = useState<string | null>(null);
   const [file, setFile] = useState<File | null>(null);
 
   useEffect(() => {
-    async function loadCatalogs() {
-      try {
-        const [instData, provData] = await Promise.all([fetchInstitutions(), fetchProvinces()]);
-        setInstitutions(instData);
-        setProvinces(provData);
-      } catch {
-        setError("No se pudieron cargar las listas de instituciones y provincias.");
-      } finally {
-        setCatalogLoading(false);
-      }
-    }
-    void loadCatalogs();
+    void fetchProvinces()
+      .then(setProvinces)
+      .catch(() => setCatalogError((prev) => prev ?? "No se pudieron cargar las provincias."))
+      .finally(() => setProvincesLoading(false));
+
+    void fetchInstitutions()
+      .then(setInstitutions)
+      .catch(() =>
+        setCatalogError((prev) => prev ?? "No se pudieron cargar las instituciones."),
+      )
+      .finally(() => setInstitutionsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -80,9 +83,12 @@ export default function RegisterPage() {
       setCareerId("");
       return;
     }
+    setCareers([]);
+    setCareersLoading(true);
     void fetchCareers(Number(institutionId))
       .then(setCareers)
-      .catch(() => setError("No se pudieron cargar las carreras."));
+      .catch(() => setCatalogError("No se pudieron cargar las carreras."))
+      .finally(() => setCareersLoading(false));
   }, [institutionId]);
 
   useEffect(() => {
@@ -91,9 +97,12 @@ export default function RegisterPage() {
       setCantonId("");
       return;
     }
+    setCantons([]);
+    setCantonsLoading(true);
     void fetchCantons(provinceId)
       .then(setCantons)
-      .catch(() => setError("No se pudieron cargar los cantones."));
+      .catch(() => setCatalogError("No se pudieron cargar los cantones."))
+      .finally(() => setCantonsLoading(false));
   }, [provinceId]);
 
   const showEventDetails = useMemo(
@@ -226,7 +235,7 @@ export default function RegisterPage() {
               <CatalogSelect
                 label="Universidad, instituto o institución"
                 required
-                disabled={catalogLoading}
+                loading={institutionsLoading}
                 value={institutionId}
                 onChange={(value) => {
                   setInstitutionId(value);
@@ -243,12 +252,14 @@ export default function RegisterPage() {
               <CatalogSelect
                 label="Carrera u ocupación"
                 required
-                disabled={!institutionId || careers.length === 0}
+                loading={careersLoading}
+                disabled={!institutionId}
                 value={careerId}
                 onChange={setCareerId}
                 placeholder={
                   institutionId ? "Selecciona tu carrera" : "Primero elige una institución"
                 }
+                emptyLabel="No hay carreras registradas para esta institución"
                 options={careers.map((item) => ({
                   id: String(item.id),
                   label: item.name,
@@ -259,7 +270,7 @@ export default function RegisterPage() {
               <CatalogSelect
                 label="Provincia"
                 required
-                disabled={catalogLoading}
+                loading={provincesLoading}
                 value={provinceId}
                 onChange={(value) => {
                   setProvinceId(value);
@@ -276,7 +287,8 @@ export default function RegisterPage() {
               <CatalogSelect
                 label="Cantón / ciudad"
                 required
-                disabled={!provinceId || cantons.length === 0}
+                loading={cantonsLoading}
+                disabled={!provinceId}
                 value={cantonId}
                 onChange={setCantonId}
                 placeholder={provinceId ? "Selecciona tu cantón" : "Primero elige una provincia"}
@@ -445,6 +457,19 @@ export default function RegisterPage() {
             ))}
           </div>
         </Card>
+
+        {catalogError && (
+          <p className="text-sm text-amber-700">
+            {catalogError}{" "}
+            <button
+              type="button"
+              className="font-medium underline"
+              onClick={() => window.location.reload()}
+            >
+              Reintentar
+            </button>
+          </p>
+        )}
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 

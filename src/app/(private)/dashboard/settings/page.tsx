@@ -39,7 +39,10 @@ function SettingsContent() {
   const [careers, setCareers] = useState<Career[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
   const [cantons, setCantons] = useState<{ id: string; name: string }[]>([]);
-  const [catalogReady, setCatalogReady] = useState(false);
+  const [provincesLoading, setProvincesLoading] = useState(true);
+  const [institutionsLoading, setInstitutionsLoading] = useState(true);
+  const [careersLoading, setCareersLoading] = useState(false);
+  const [cantonsLoading, setCantonsLoading] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
@@ -52,16 +55,13 @@ function SettingsContent() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
-    async function loadCatalogs() {
-      try {
-        const [instData, provData] = await Promise.all([fetchInstitutions(), fetchProvinces()]);
-        setInstitutions(instData);
-        setProvinces(provData);
-      } finally {
-        setCatalogReady(true);
-      }
-    }
-    void loadCatalogs();
+    void fetchProvinces()
+      .then(setProvinces)
+      .finally(() => setProvincesLoading(false));
+
+    void fetchInstitutions()
+      .then(setInstitutions)
+      .finally(() => setInstitutionsLoading(false));
   }, []);
 
   useEffect(() => {
@@ -69,7 +69,11 @@ function SettingsContent() {
       setCareers([]);
       return;
     }
-    void fetchCareers(Number(institutionId)).then(setCareers);
+    setCareers([]);
+    setCareersLoading(true);
+    void fetchCareers(Number(institutionId))
+      .then(setCareers)
+      .finally(() => setCareersLoading(false));
   }, [institutionId]);
 
   useEffect(() => {
@@ -77,7 +81,11 @@ function SettingsContent() {
       setCantons([]);
       return;
     }
-    void fetchCantons(provinceId).then(setCantons);
+    setCantons([]);
+    setCantonsLoading(true);
+    void fetchCantons(provinceId)
+      .then(setCantons)
+      .finally(() => setCantonsLoading(false));
   }, [provinceId]);
 
   useEffect(() => {
@@ -241,7 +249,7 @@ function SettingsContent() {
             <div>
               <CatalogSelect
                 label="Institución"
-                disabled={!catalogReady}
+                loading={institutionsLoading}
                 value={institutionId}
                 onChange={(value) => {
                   setInstitutionId(value);
@@ -260,6 +268,7 @@ function SettingsContent() {
             <div>
               <CatalogSelect
                 label="Carrera"
+                loading={careersLoading}
                 disabled={!institutionId}
                 value={careerId}
                 onChange={setCareerId}
@@ -276,7 +285,7 @@ function SettingsContent() {
             <div>
               <CatalogSelect
                 label="Provincia"
-                disabled={!catalogReady}
+                loading={provincesLoading}
                 value={provinceId}
                 onChange={(value) => {
                   setProvinceId(value);
@@ -292,6 +301,7 @@ function SettingsContent() {
             <div>
               <CatalogSelect
                 label="Cantón / ciudad"
+                loading={cantonsLoading}
                 disabled={!provinceId}
                 value={cantonId}
                 onChange={setCantonId}

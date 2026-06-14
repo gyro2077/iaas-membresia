@@ -16,6 +16,8 @@ interface CatalogSelectProps {
   required?: boolean;
   disabled?: boolean;
   searchable?: boolean;
+  loading?: boolean;
+  emptyLabel?: string;
 }
 
 export function CatalogSelect({
@@ -27,6 +29,8 @@ export function CatalogSelect({
   required = false,
   disabled = false,
   searchable = true,
+  loading = false,
+  emptyLabel = "Sin opciones disponibles",
 }: CatalogSelectProps) {
   const [filter, setFilter] = useState("");
 
@@ -36,13 +40,16 @@ export function CatalogSelect({
     return options.filter((option) => option.label.toLowerCase().includes(needle));
   }, [filter, options, searchable]);
 
+  const emptyText = loading ? "Cargando opciones..." : emptyLabel;
+  const isDisabled = disabled || loading || (!loading && options.length === 0);
+
   return (
     <div>
       <label className="mb-1 block text-sm text-iaas-earth">
         {label}
         {required && " *"}
       </label>
-      {searchable && options.length > 8 && (
+      {searchable && !loading && options.length > 8 && (
         <input
           type="text"
           placeholder="Buscar..."
@@ -54,12 +61,12 @@ export function CatalogSelect({
       )}
       <select
         required={required}
-        disabled={disabled || options.length === 0}
+        disabled={isDisabled}
         value={value}
         onChange={(e) => onChange(e.target.value)}
         className="w-full rounded-lg border border-iaas-earth/20 px-3 py-2 text-sm focus:border-iaas-green focus:outline-none focus:ring-2 focus:ring-iaas-green/20 disabled:bg-iaas-light/50"
       >
-        <option value="">{options.length === 0 ? "Sin opciones disponibles" : placeholder}</option>
+        <option value="">{options.length === 0 ? emptyText : placeholder}</option>
         {filtered.map((option) => (
           <option key={option.id} value={option.id}>
             {option.label}
