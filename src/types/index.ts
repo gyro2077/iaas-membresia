@@ -89,3 +89,33 @@ export interface RenewResponse {
   message: string;
   status: string;
 }
+
+export interface UserProfileUpdate {
+  nombres?: string;
+  institution_id?: number;
+  career_id?: number;
+  province_id?: string;
+  canton_id?: string;
+}
+
+export interface Institution {
+  id: number;
+  name: string;
+  is_military: boolean;
+  alias: string | null;
+}
+
+export interface Career {
+  id: number;
+  name: string;
+}
+
+export interface Province {
+  id: string;
+  name: string;
+}
+
+export interface Canton {
+  id: string;
+  name: string;
+}

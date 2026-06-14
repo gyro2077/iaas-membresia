@@ -5,10 +5,20 @@ import { useRouter, useSearchParams } from "next/navigation";
 
 import axios from "axios";
 
+import { CatalogSelect } from "@/components/CatalogSelect";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api, setStoredToken } from "@/lib/api";
+import {
+  fetchCantons,
+  fetchCareers,
+  fetchInstitutions,
+  fetchProvinces,
+  type Career,
+  type Institution,
+  type Province,
+} from "@/lib/catalog";
 import { useAuth } from "@/store/useAuth";
 import type { TokenResponse, UserProfile } from "@/types";
 
@@ -20,10 +30,16 @@ function SettingsContent() {
 
   const [profileForm, setProfileForm] = useState({
     nombres: "",
-    institucion: "",
-    carrera: "",
-    ciudad: "",
   });
+  const [institutionId, setInstitutionId] = useState("");
+  const [careerId, setCareerId] = useState("");
+  const [provinceId, setProvinceId] = useState("");
+  const [cantonId, setCantonId] = useState("");
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [careers, setCareers] = useState<Career[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cantons, setCantons] = useState<{ id: string; name: string }[]>([]);
+  const [catalogReady, setCatalogReady] = useState(false);
   const [passwordForm, setPasswordForm] = useState({
     current_password: "",
     new_password: "",
@@ -36,13 +52,37 @@ function SettingsContent() {
   const [submitting, setSubmitting] = useState(false);
 
   useEffect(() => {
+    async function loadCatalogs() {
+      try {
+        const [instData, provData] = await Promise.all([fetchInstitutions(), fetchProvinces()]);
+        setInstitutions(instData);
+        setProvinces(provData);
+      } finally {
+        setCatalogReady(true);
+      }
+    }
+    void loadCatalogs();
+  }, []);
+
+  useEffect(() => {
+    if (!institutionId) {
+      setCareers([]);
+      return;
+    }
+    void fetchCareers(Number(institutionId)).then(setCareers);
+  }, [institutionId]);
+
+  useEffect(() => {
+    if (!provinceId) {
+      setCantons([]);
+      return;
+    }
+    void fetchCantons(provinceId).then(setCantons);
+  }, [provinceId]);
+
+  useEffect(() => {
     if (user?.nombres) {
-      setProfileForm({
-        nombres: user.nombres,
-        institucion: user.institucion,
-        carrera: user.carrera,
-        ciudad: user.ciudad,
-      });
+      setProfileForm({ nombres: user.nombres });
     }
   }, [user]);
 
@@ -52,7 +92,13 @@ function SettingsContent() {
     setProfileError(null);
 
     try {
-      const { data } = await api.patch<UserProfile>("/users/me", profileForm);
+      const payload: Record<string, string | number> = { nombres: profileForm.nombres };
+      if (institutionId) payload.institution_id = Number(institutionId);
+      if (careerId) payload.career_id = Number(careerId);
+      if (provinceId) payload.province_id = provinceId;
+      if (cantonId) payload.canton_id = cantonId;
+
+      const { data } = await api.patch<UserProfile>("/users/me", payload);
       setUser(data);
       setProfileMessage("Perfil actualizado correctamente.");
     } catch {
@@ -193,25 +239,71 @@ function SettingsContent() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-iaas-earth">Institución</label>
-              <Input
-                value={profileForm.institucion}
-                onChange={(e) => setProfileForm((c) => ({ ...c, institucion: e.target.value }))}
+              <CatalogSelect
+                label="Institución"
+                disabled={!catalogReady}
+                value={institutionId}
+                onChange={(value) => {
+                  setInstitutionId(value);
+                  setCareerId("");
+                }}
+                placeholder={user.institucion || "Selecciona institución"}
+                options={institutions.map((item) => ({
+                  id: String(item.id),
+                  label: item.alias ? `${item.name} (${item.alias})` : item.name,
+                }))}
+              />
+              {!institutionId && user.institucion && (
+                <p className="mt-1 text-xs text-iaas-earth/70">Actual: {user.institucion}</p>
+              )}
+            </div>
+            <div>
+              <CatalogSelect
+                label="Carrera"
+                disabled={!institutionId}
+                value={careerId}
+                onChange={setCareerId}
+                placeholder={user.carrera || "Selecciona carrera"}
+                options={careers.map((item) => ({
+                  id: String(item.id),
+                  label: item.name,
+                }))}
+              />
+              {!careerId && user.carrera && (
+                <p className="mt-1 text-xs text-iaas-earth/70">Actual: {user.carrera}</p>
+              )}
+            </div>
+            <div>
+              <CatalogSelect
+                label="Provincia"
+                disabled={!catalogReady}
+                value={provinceId}
+                onChange={(value) => {
+                  setProvinceId(value);
+                  setCantonId("");
+                }}
+                placeholder="Selecciona provincia"
+                options={provinces.map((item) => ({
+                  id: item.id,
+                  label: item.name,
+                }))}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-iaas-earth">Carrera</label>
-              <Input
-                value={profileForm.carrera}
-                onChange={(e) => setProfileForm((c) => ({ ...c, carrera: e.target.value }))}
+              <CatalogSelect
+                label="Cantón / ciudad"
+                disabled={!provinceId}
+                value={cantonId}
+                onChange={setCantonId}
+                placeholder={user.ciudad || "Selecciona cantón"}
+                options={cantons.map((item) => ({
+                  id: item.id,
+                  label: item.name,
+                }))}
               />
-            </div>
-            <div>
-              <label className="mb-1 block text-sm text-iaas-earth">Ciudad</label>
-              <Input
-                value={profileForm.ciudad}
-                onChange={(e) => setProfileForm((c) => ({ ...c, ciudad: e.target.value }))}
-              />
+              {!cantonId && user.ciudad && (
+                <p className="mt-1 text-xs text-iaas-earth/70">Actual: {user.ciudad}</p>
+              )}
             </div>
             <div className="md:col-span-2">
               {profileMessage && <p className="mb-3 text-sm text-iaas-green">{profileMessage}</p>}

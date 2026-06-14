@@ -80,28 +80,57 @@ export default function DashboardPage() {
   }
 
   return (
-    <div className="mx-auto max-w-5xl space-y-6 px-4 py-10">
-      <div>
+    <div className="mx-auto max-w-6xl px-4 py-8">
+      <div className="mb-6">
         <h1 className="text-3xl font-bold text-iaas-green">Mi dashboard</h1>
         <p className="text-iaas-earth">Bienvenido, {user.nombres}</p>
       </div>
 
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardTitle>Estado de membresía</CardTitle>
-          <CardDescription>Tu cuenta permanece activa aunque la membresía expire.</CardDescription>
-          <div
-            className={`mt-4 rounded-xl p-4 ${
-              isActive ? "bg-iaas-light text-iaas-green" : "bg-red-50 text-red-700"
-            }`}
-          >
-            <p className="font-semibold">{isActive ? "Membresía activa" : `Estado: ${user.estado_pago}`}</p>
-            <p className="mt-2 text-sm">Expira: {formatDate(user.fecha_expiracion)}</p>
-          </div>
-          <Link href="/dashboard/settings" className="mt-4 inline-block text-sm text-iaas-green hover:underline">
-            Editar perfil y contraseña →
-          </Link>
-        </Card>
+      <div className="grid items-start gap-6 lg:grid-cols-[minmax(0,1fr)_minmax(0,1.15fr)]">
+        <div className="space-y-6">
+          <Card>
+            <CardTitle>Estado de membresía</CardTitle>
+            <CardDescription>Tu cuenta permanece activa aunque la membresía expire.</CardDescription>
+            <div
+              className={`mt-4 rounded-xl p-4 ${
+                isActive ? "bg-iaas-light text-iaas-green" : "bg-red-50 text-red-700"
+              }`}
+            >
+              <p className="font-semibold">
+                {isActive ? "Membresía activa" : `Estado: ${user.estado_pago}`}
+              </p>
+              <p className="mt-2 text-sm">Expira: {formatDate(user.fecha_expiracion)}</p>
+            </div>
+            <Link
+              href="/dashboard/settings"
+              className="mt-4 inline-block text-sm text-iaas-green hover:underline"
+            >
+              Editar perfil y contraseña →
+            </Link>
+          </Card>
+
+          <Card>
+            <CardTitle>Datos del perfil</CardTitle>
+            <dl className="mt-4 grid gap-4 text-sm">
+              <div>
+                <dt className="text-iaas-earth">Correo</dt>
+                <dd className="font-medium">{user.correo}</dd>
+              </div>
+              <div>
+                <dt className="text-iaas-earth">Institución</dt>
+                <dd className="font-medium">{user.institucion}</dd>
+              </div>
+              <div>
+                <dt className="text-iaas-earth">Carrera</dt>
+                <dd className="font-medium">{user.carrera}</dd>
+              </div>
+              <div>
+                <dt className="text-iaas-earth">Ciudad</dt>
+                <dd className="font-medium">{user.ciudad}</dd>
+              </div>
+            </dl>
+          </Card>
+        </div>
 
         <Card>
           <CardTitle>Renovar membresía</CardTitle>
@@ -115,8 +144,8 @@ export default function DashboardPage() {
               <p className="mb-3 text-xs text-iaas-earth/80">
                 Solo imágenes JPG, PNG o WEBP (máx. 5 MB).
               </p>
-              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-iaas-earth/20 bg-white px-4 py-8 hover:border-iaas-green/40 hover:bg-iaas-light/50">
-                <Upload className="mb-2 h-8 w-8 text-iaas-green" />
+              <label className="flex cursor-pointer flex-col items-center justify-center rounded-xl border-2 border-dashed border-iaas-earth/20 bg-white px-4 py-6 hover:border-iaas-green/40 hover:bg-iaas-light/50">
+                <Upload className="mb-2 h-7 w-7 text-iaas-green" />
                 <span className="text-sm text-iaas-earth">
                   {file ? file.name : "Haz clic para subir tu comprobante"}
                 </span>
@@ -133,29 +162,19 @@ export default function DashboardPage() {
                 <img
                   src={previewUrl}
                   alt="Vista previa del comprobante"
-                  className="mt-4 max-h-48 rounded-lg border border-iaas-earth/10 object-contain"
+                  className="mt-4 max-h-40 rounded-lg border border-iaas-earth/10 object-contain"
                 />
               )}
             </div>
             {message && <p className="text-sm text-iaas-green">{message}</p>}
             {error && <p className="text-sm text-red-600">{error}</p>}
-            <Button type="submit" disabled={loading || !file}>
+            <Button type="submit" className="w-full sm:w-auto" disabled={loading || !file}>
               <Upload className="mr-2 h-4 w-4" />
               {loading ? "Subiendo..." : "Enviar comprobante"}
             </Button>
           </form>
         </Card>
       </div>
-
-      <Card>
-        <CardTitle>Datos del perfil</CardTitle>
-        <dl className="mt-4 grid gap-3 text-sm md:grid-cols-2">
-          <div><dt className="text-iaas-earth">Correo</dt><dd className="font-medium">{user.correo}</dd></div>
-          <div><dt className="text-iaas-earth">Institución</dt><dd className="font-medium">{user.institucion}</dd></div>
-          <div><dt className="text-iaas-earth">Carrera</dt><dd className="font-medium">{user.carrera}</dd></div>
-          <div><dt className="text-iaas-earth">Ciudad</dt><dd className="font-medium">{user.ciudad}</dd></div>
-        </dl>
-      </Card>
     </div>
   );
 }

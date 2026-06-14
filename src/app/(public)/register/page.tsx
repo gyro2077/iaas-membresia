@@ -1,16 +1,26 @@
 "use client";
 
-import { FormEvent, useMemo, useState } from "react";
+import { FormEvent, useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { AtSign, CheckCircle2, Upload } from "lucide-react";
 import axios from "axios";
 
+import { CatalogSelect } from "@/components/CatalogSelect";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { PaymentInfo } from "@/components/PaymentInfo";
 import { api } from "@/lib/api";
+import {
+  fetchCantons,
+  fetchCareers,
+  fetchInstitutions,
+  fetchProvinces,
+  type Career,
+  type Institution,
+  type Province,
+} from "@/lib/catalog";
 import type { RegisterResponse } from "@/types";
 
 const MAX_FILE_BYTES = 5 * 1024 * 1024;
@@ -30,9 +40,6 @@ export default function RegisterPage() {
   const [form, setForm] = useState({
     correo: "",
     nombres: "",
-    institucion: "",
-    carrera: "",
-    ciudad: "",
     fecha_nacimiento: "",
     telefono: "",
     motivacion: "",
@@ -41,7 +48,53 @@ export default function RegisterPage() {
     evento_parte_favorita: "",
     evento_mejora: "",
   });
+  const [institutionId, setInstitutionId] = useState("");
+  const [careerId, setCareerId] = useState("");
+  const [provinceId, setProvinceId] = useState("");
+  const [cantonId, setCantonId] = useState("");
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [careers, setCareers] = useState<Career[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+  const [cantons, setCantons] = useState<{ id: string; name: string }[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [file, setFile] = useState<File | null>(null);
+
+  useEffect(() => {
+    async function loadCatalogs() {
+      try {
+        const [instData, provData] = await Promise.all([fetchInstitutions(), fetchProvinces()]);
+        setInstitutions(instData);
+        setProvinces(provData);
+      } catch {
+        setError("No se pudieron cargar las listas de instituciones y provincias.");
+      } finally {
+        setCatalogLoading(false);
+      }
+    }
+    void loadCatalogs();
+  }, []);
+
+  useEffect(() => {
+    if (!institutionId) {
+      setCareers([]);
+      setCareerId("");
+      return;
+    }
+    void fetchCareers(Number(institutionId))
+      .then(setCareers)
+      .catch(() => setError("No se pudieron cargar las carreras."));
+  }, [institutionId]);
+
+  useEffect(() => {
+    if (!provinceId) {
+      setCantons([]);
+      setCantonId("");
+      return;
+    }
+    void fetchCantons(provinceId)
+      .then(setCantons)
+      .catch(() => setError("No se pudieron cargar los cantones."));
+  }, [provinceId]);
 
   const showEventDetails = useMemo(
     () => attendedPositive(form.asistio_evento),
@@ -83,6 +136,12 @@ export default function RegisterPage() {
       return;
     }
 
+    if (!institutionId || !careerId || !provinceId || !cantonId) {
+      setError("Selecciona institución, carrera, provincia y cantón.");
+      setLoading(false);
+      return;
+    }
+
     try {
       const body = new FormData();
       Object.entries(form).forEach(([key, value]) => {
@@ -91,6 +150,10 @@ export default function RegisterPage() {
         }
         body.append(key, value.trim());
       });
+      body.append("institution_id", institutionId);
+      body.append("career_id", careerId);
+      body.append("province_id", provinceId);
+      body.append("canton_id", cantonId);
       body.append("file", file);
 
       const { data } = await api.post<RegisterResponse>("/auth/register", body, {
@@ -160,29 +223,67 @@ export default function RegisterPage() {
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-iaas-earth">
-                Universidad, instituto o institución *
-              </label>
-              <Input
+              <CatalogSelect
+                label="Universidad, instituto o institución"
                 required
-                value={form.institucion}
-                onChange={(e) => updateField("institucion", e.target.value)}
+                disabled={catalogLoading}
+                value={institutionId}
+                onChange={(value) => {
+                  setInstitutionId(value);
+                  setCareerId("");
+                }}
+                placeholder="Selecciona tu institución"
+                options={institutions.map((item) => ({
+                  id: String(item.id),
+                  label: item.alias ? `${item.name} (${item.alias})` : item.name,
+                }))}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-iaas-earth">Carrera u ocupación *</label>
-              <Input
+              <CatalogSelect
+                label="Carrera u ocupación"
                 required
-                value={form.carrera}
-                onChange={(e) => updateField("carrera", e.target.value)}
+                disabled={!institutionId || careers.length === 0}
+                value={careerId}
+                onChange={setCareerId}
+                placeholder={
+                  institutionId ? "Selecciona tu carrera" : "Primero elige una institución"
+                }
+                options={careers.map((item) => ({
+                  id: String(item.id),
+                  label: item.name,
+                }))}
               />
             </div>
             <div>
-              <label className="mb-1 block text-sm text-iaas-earth">Ciudad de residencia *</label>
-              <Input
+              <CatalogSelect
+                label="Provincia"
                 required
-                value={form.ciudad}
-                onChange={(e) => updateField("ciudad", e.target.value)}
+                disabled={catalogLoading}
+                value={provinceId}
+                onChange={(value) => {
+                  setProvinceId(value);
+                  setCantonId("");
+                }}
+                placeholder="Selecciona tu provincia"
+                options={provinces.map((item) => ({
+                  id: item.id,
+                  label: item.name,
+                }))}
+              />
+            </div>
+            <div>
+              <CatalogSelect
+                label="Cantón / ciudad"
+                required
+                disabled={!provinceId || cantons.length === 0}
+                value={cantonId}
+                onChange={setCantonId}
+                placeholder={provinceId ? "Selecciona tu cantón" : "Primero elige una provincia"}
+                options={cantons.map((item) => ({
+                  id: item.id,
+                  label: item.name,
+                }))}
               />
             </div>
             <div>

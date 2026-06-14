@@ -5,6 +5,7 @@ import {
   AlertCircle,
   Check,
   Download,
+  ExternalLink,
   Eye,
   Loader2,
   RefreshCw,
@@ -17,10 +18,12 @@ import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { api } from "@/lib/api";
+import { fetchInstitutions, fetchProvinces, type Institution, type Province } from "@/lib/catalog";
 import { formatDate } from "@/lib/utils";
 import type { AdminActionResponse, AdminMember, AdminMemberListResponse } from "@/types";
 
 const ESTADOS = ["", "ACTIVO", "PENDIENTE", "EXPIRADO", "RECHAZADO"] as const;
+const ROLES = ["", "ALL", "MEMBER", "ADMIN"] as const;
 
 function statusBadgeClass(estado: string) {
   switch (estado) {
@@ -60,9 +63,21 @@ export default function AdminMembersPage() {
   );
 
   const [estado, setEstado] = useState("");
+  const [rol, setRol] = useState("");
+  const [institutionId, setInstitutionId] = useState("");
+  const [provinceId, setProvinceId] = useState("");
   const [q, setQ] = useState("");
   const [expiringOnly, setExpiringOnly] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [institutions, setInstitutions] = useState<Institution[]>([]);
+  const [provinces, setProvinces] = useState<Province[]>([]);
+
+  useEffect(() => {
+    void Promise.all([fetchInstitutions(), fetchProvinces()]).then(([inst, prov]) => {
+      setInstitutions(inst);
+      setProvinces(prov);
+    });
+  }, []);
 
   const loadMembers = useCallback(async () => {
     setLoading(true);
@@ -70,6 +85,9 @@ export default function AdminMembersPage() {
     try {
       const params: Record<string, string | number | boolean> = { page, limit };
       if (estado) params.estado = estado;
+      if (rol) params.rol = rol;
+      if (institutionId) params.institution_id = Number(institutionId);
+      if (provinceId) params.province_id = provinceId;
       if (q) params.q = q;
       if (expiringOnly) params.expiring_days = 30;
 
@@ -82,7 +100,7 @@ export default function AdminMembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, estado, q, expiringOnly]);
+  }, [page, limit, estado, rol, institutionId, provinceId, q, expiringOnly]);
 
   useEffect(() => {
     void loadMembers();
@@ -99,6 +117,9 @@ export default function AdminMembersPage() {
     try {
       const params: Record<string, string | number | boolean> = {};
       if (estado) params.estado = estado;
+      if (rol) params.rol = rol;
+      if (institutionId) params.institution_id = Number(institutionId);
+      if (provinceId) params.province_id = provinceId;
       if (q) params.q = q;
       if (expiringOnly) params.expiring_days = 30;
 
@@ -181,7 +202,7 @@ export default function AdminMembersPage() {
       <Card className="mb-6">
         <CardTitle>Filtros</CardTitle>
         <CardDescription>Refina la lista antes de auditar o exportar.</CardDescription>
-        <div className="mt-4 grid gap-4 md:grid-cols-4">
+        <div className="mt-4 grid gap-4 md:grid-cols-2 lg:grid-cols-3">
           <div>
             <label className="mb-1 block text-sm text-iaas-earth">Estado</label>
             <select
@@ -200,11 +221,65 @@ export default function AdminMembersPage() {
               ))}
             </select>
           </div>
+          <div>
+            <label className="mb-1 block text-sm text-iaas-earth">Rol</label>
+            <select
+              className="w-full rounded-lg border border-iaas-earth/20 px-3 py-2 text-sm"
+              value={rol}
+              onChange={(e) => {
+                setPage(1);
+                setRol(e.target.value);
+              }}
+            >
+              <option value="">Todos</option>
+              {ROLES.filter(Boolean).map((value) => (
+                <option key={value} value={value}>
+                  {value === "ALL" ? "Todos (explícito)" : value}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-iaas-earth">Institución</label>
+            <select
+              className="w-full rounded-lg border border-iaas-earth/20 px-3 py-2 text-sm"
+              value={institutionId}
+              onChange={(e) => {
+                setPage(1);
+                setInstitutionId(e.target.value);
+              }}
+            >
+              <option value="">Todas</option>
+              {institutions.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.alias ? `${item.name} (${item.alias})` : item.name}
+                </option>
+              ))}
+            </select>
+          </div>
+          <div>
+            <label className="mb-1 block text-sm text-iaas-earth">Provincia</label>
+            <select
+              className="w-full rounded-lg border border-iaas-earth/20 px-3 py-2 text-sm"
+              value={provinceId}
+              onChange={(e) => {
+                setPage(1);
+                setProvinceId(e.target.value);
+              }}
+            >
+              <option value="">Todas</option>
+              {provinces.map((item) => (
+                <option key={item.id} value={item.id}>
+                  {item.name}
+                </option>
+              ))}
+            </select>
+          </div>
           <div className="md:col-span-2">
             <label className="mb-1 block text-sm text-iaas-earth">Buscar</label>
             <div className="flex gap-2">
               <Input
-                placeholder="Nombre, correo o institución"
+                placeholder="Nombre, correo, institución, carrera, ciudad o teléfono"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
                 onKeyDown={(e) => {
@@ -275,6 +350,7 @@ export default function AdminMembersPage() {
                   <th className="px-3 py-2">Miembro</th>
                   <th className="px-3 py-2">Institución</th>
                   <th className="px-3 py-2">Estado</th>
+                  <th className="px-3 py-2">Comprobante</th>
                   <th className="px-3 py-2">Expira</th>
                   <th className="px-3 py-2">Días</th>
                   <th className="px-3 py-2">Acciones</th>
@@ -286,6 +362,11 @@ export default function AdminMembersPage() {
                     <td className="px-3 py-3">
                       <p className="font-medium text-iaas-green">{member.nombres}</p>
                       <p className="text-xs text-iaas-earth">{member.correo}</p>
+                      {member.rol === "ADMIN" && (
+                        <span className="mt-1 inline-block rounded-full bg-purple-100 px-2 py-0.5 text-xs font-medium text-purple-800">
+                          ADMIN
+                        </span>
+                      )}
                       {member.telefono && (
                         <p className="text-xs text-iaas-earth/70">{member.telefono}</p>
                       )}
@@ -301,6 +382,39 @@ export default function AdminMembersPage() {
                         {member.estado_pago}
                       </span>
                     </td>
+                    <td className="px-3 py-3">
+                      {member.url_comprobante ? (
+                        <div className="flex items-center gap-2">
+                          {/* eslint-disable-next-line @next/next/no-img-element */}
+                          <img
+                            src={member.url_comprobante}
+                            alt="Comprobante"
+                            className="h-10 w-10 cursor-pointer rounded border border-iaas-earth/10 object-cover"
+                            onClick={() => setPreviewUrl(member.url_comprobante)}
+                          />
+                          <div className="flex flex-col gap-1">
+                            <Button
+                              type="button"
+                              size="sm"
+                              variant="secondary"
+                              onClick={() => setPreviewUrl(member.url_comprobante)}
+                            >
+                              <Eye className="h-4 w-4" />
+                            </Button>
+                            <a
+                              href={member.url_comprobante}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="inline-flex items-center justify-center rounded-lg border border-iaas-earth/20 p-1.5 text-iaas-earth hover:bg-iaas-light"
+                            >
+                              <ExternalLink className="h-4 w-4" />
+                            </a>
+                          </div>
+                        </div>
+                      ) : (
+                        <span className="text-xs text-iaas-earth/60">Sin comprobante</span>
+                      )}
+                    </td>
                     <td className="px-3 py-3">{formatDate(member.fecha_expiracion)}</td>
                     <td className="px-3 py-3">
                       <span
@@ -315,16 +429,6 @@ export default function AdminMembersPage() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-1">
-                        {member.url_comprobante && (
-                          <Button
-                            type="button"
-                            size="sm"
-                            variant="secondary"
-                            onClick={() => setPreviewUrl(member.url_comprobante)}
-                          >
-                            <Eye className="h-4 w-4" />
-                          </Button>
-                        )}
                         {member.estado_pago === "PENDIENTE" && (
                           <>
                             <Button
