@@ -1,15 +1,16 @@
 "use client";
 
-import { FormEvent, useEffect, useState } from "react";
+import { FormEvent, Suspense, useEffect, useState } from "react";
 import Link from "next/link";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import { KeyRound, ShieldAlert } from "lucide-react";
 import axios from "axios";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
-import { api, setStoredToken } from "@/lib/api";
+import { api, getStoredToken, setStoredToken } from "@/lib/api";
+import { consumeLogoutFlag } from "@/lib/authSession";
 import { useAuth } from "@/store/useAuth";
 import type { TokenResponse, UserProfile } from "@/types";
 
@@ -21,28 +22,36 @@ function getErrorMessage(error: unknown): string {
   return "Correo o contraseña incorrectos.";
 }
 
-export default function LoginPage() {
+function LoginForm() {
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const loggedOut = searchParams.get("logout") === "1";
   const { setAuth, clearAuth, token } = useAuth();
   const [correo, setCorreo] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [logoutMessage, setLogoutMessage] = useState<string | null>(null);
 
   useEffect(() => {
-    clearAuth();
-  }, [clearAuth]);
+    const fromLogout = loggedOut || consumeLogoutFlag();
+    if (fromLogout) {
+      clearAuth();
+      setLogoutMessage("Sesión cerrada correctamente.");
+      return;
+    }
 
-  useEffect(() => {
-    if (token) {
+    const stored = getStoredToken();
+    if (stored && token) {
       router.replace("/dashboard");
     }
-  }, [token, router]);
+  }, [loggedOut, clearAuth, token, router]);
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setLoading(true);
     setError(null);
+    setLogoutMessage(null);
 
     try {
       const { data: tokenData } = await api.post<TokenResponse>("/auth/login", {
@@ -58,7 +67,7 @@ export default function LoginPage() {
       if (user.debe_cambiar_password || tokenData.debe_cambiar_password) {
         router.push("/dashboard/settings?forcePassword=1");
       } else if (user.rol === "ADMIN") {
-        router.push("/admin/pending");
+        router.push("/admin/members");
       } else {
         router.push("/dashboard");
       }
@@ -71,14 +80,19 @@ export default function LoginPage() {
 
   return (
     <div className="mx-auto flex max-w-md flex-col gap-4 px-4 py-12">
+      {logoutMessage && (
+        <div className="rounded-xl border border-green-200 bg-green-50 px-4 py-3 text-sm text-green-900">
+          {logoutMessage}
+        </div>
+      )}
+
       <div className="rounded-xl border border-iaas-accent/40 bg-yellow-50 px-4 py-4 text-sm text-yellow-950">
         <div className="flex gap-3">
           <ShieldAlert className="mt-0.5 h-5 w-5 shrink-0 text-iaas-accent" />
           <div>
             <p className="font-semibold">Primer acceso — contraseña temporal</p>
             <p className="mt-1 leading-relaxed">
-              Miembros: contraseña temporal <strong>IAAS2026!</strong> (deberás cambiarla al
-              entrar).
+              Miembros: contraseña temporal <strong>IAAS2026!</strong> (deberás cambiarla al entrar).
             </p>
           </div>
         </div>
@@ -129,5 +143,13 @@ export default function LoginPage() {
         </p>
       </Card>
     </div>
+  );
+}
+
+export default function LoginPage() {
+  return (
+    <Suspense fallback={<div className="px-4 py-12 text-iaas-earth">Cargando...</div>}>
+      <LoginForm />
+    </Suspense>
   );
 }

@@ -12,6 +12,7 @@ interface AuthState {
   setAuth: (token: string, user: UserProfile) => void;
   setUser: (user: UserProfile) => void;
   clearAuth: () => void;
+  signOut: () => void;
   hydrate: () => void;
 }
 
@@ -28,7 +29,20 @@ export const useAuth = create<AuthState>((set) => ({
     clearStoredToken();
     set({ token: null, user: null, hydrated: true });
   },
+  signOut: () => {
+    clearStoredToken();
+    set({ token: null, user: null, hydrated: true });
+    if (typeof window !== "undefined") {
+      sessionStorage.setItem("iaas_logging_out", "1");
+      window.location.href = "/login?logout=1";
+    }
+  },
   hydrate: () => {
+    if (typeof window !== "undefined" && sessionStorage.getItem("iaas_logging_out") === "1") {
+      clearStoredToken();
+      set({ token: null, user: null, hydrated: true });
+      return;
+    }
     const token = getStoredToken();
     set({ token, hydrated: true });
   },

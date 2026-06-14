@@ -5,13 +5,12 @@ import { usePathname } from "next/navigation";
 import { Leaf, LogIn, LogOut, Shield, User, UserPlus } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { logoutAndRedirect } from "@/lib/authSession";
 import { cn } from "@/lib/utils";
 import { selectIsAdmin, useAuth } from "@/store/useAuth";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, token } = useAuth();
+  const { user, token, signOut } = useAuth();
   const isAdmin = useAuth(selectIsAdmin);
   const isAuthenticated = Boolean(token && user);
 
@@ -80,7 +79,7 @@ export function Navbar() {
                   </Link>
                 </>
               )}
-              <Button type="button" variant="ghost" size="sm" onClick={() => logoutAndRedirect("/")}>
+              <Button type="button" variant="ghost" size="sm" onClick={() => signOut()}>
                 <LogOut className="mr-1 h-4 w-4" />
                 Salir
               </Button>

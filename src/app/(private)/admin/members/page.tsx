@@ -8,12 +8,14 @@ import {
   ExternalLink,
   Eye,
   Loader2,
+  Pencil,
   RefreshCw,
   Search,
   X,
 } from "lucide-react";
 import { isAxiosError } from "axios";
 
+import { AdminCatalogEditModal } from "@/components/AdminCatalogEditModal";
 import { Button } from "@/components/ui/button";
 import { Card, CardDescription, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -68,7 +70,9 @@ export default function AdminMembersPage() {
   const [provinceId, setProvinceId] = useState("");
   const [q, setQ] = useState("");
   const [expiringOnly, setExpiringOnly] = useState(false);
+  const [missingCatalogOnly, setMissingCatalogOnly] = useState(false);
   const [searchInput, setSearchInput] = useState("");
+  const [editingMember, setEditingMember] = useState<AdminMember | null>(null);
   const [institutions, setInstitutions] = useState<Institution[]>([]);
   const [provinces, setProvinces] = useState<Province[]>([]);
 
@@ -90,6 +94,7 @@ export default function AdminMembersPage() {
       if (provinceId) params.province_id = provinceId;
       if (q) params.q = q;
       if (expiringOnly) params.expiring_days = 30;
+      if (missingCatalogOnly) params.missing_catalog = true;
 
       const { data } = await api.get<AdminMemberListResponse>("/admin/members", { params });
       setMembers(data.items);
@@ -100,7 +105,7 @@ export default function AdminMembersPage() {
     } finally {
       setLoading(false);
     }
-  }, [page, limit, estado, rol, institutionId, provinceId, q, expiringOnly]);
+  }, [page, limit, estado, rol, institutionId, provinceId, q, expiringOnly, missingCatalogOnly]);
 
   useEffect(() => {
     void loadMembers();
@@ -122,6 +127,7 @@ export default function AdminMembersPage() {
       if (provinceId) params.province_id = provinceId;
       if (q) params.q = q;
       if (expiringOnly) params.expiring_days = 30;
+      if (missingCatalogOnly) params.missing_catalog = true;
 
       const response = await api.get("/admin/members/export", {
         params,
@@ -301,7 +307,7 @@ export default function AdminMembersPage() {
               </Button>
             </div>
           </div>
-          <div className="flex items-end">
+          <div className="flex flex-col gap-2">
             <label className="flex items-center gap-2 text-sm text-iaas-earth">
               <input
                 type="checkbox"
@@ -312,6 +318,17 @@ export default function AdminMembersPage() {
                 }}
               />
               Por vencer (30 días)
+            </label>
+            <label className="flex items-center gap-2 text-sm text-iaas-earth">
+              <input
+                type="checkbox"
+                checked={missingCatalogOnly}
+                onChange={(e) => {
+                  setPage(1);
+                  setMissingCatalogOnly(e.target.checked);
+                }}
+              />
+              Solo sin catálogo
             </label>
           </div>
         </div>
@@ -374,6 +391,12 @@ export default function AdminMembersPage() {
                     <td className="px-3 py-3">
                       <p>{member.institucion}</p>
                       <p className="text-xs text-iaas-earth">{member.carrera}</p>
+                      <p className="text-xs text-iaas-earth/70">{member.ciudad}</p>
+                      {!member.catalog_complete && (
+                        <span className="mt-1 inline-block rounded-full bg-amber-100 px-2 py-0.5 text-xs font-medium text-amber-900">
+                          Sin catálogo
+                        </span>
+                      )}
                     </td>
                     <td className="px-3 py-3">
                       <span
@@ -429,6 +452,15 @@ export default function AdminMembersPage() {
                     </td>
                     <td className="px-3 py-3">
                       <div className="flex flex-wrap gap-1">
+                        <Button
+                          type="button"
+                          size="sm"
+                          variant="secondary"
+                          onClick={() => setEditingMember(member)}
+                          title="Corregir catálogo"
+                        >
+                          <Pencil className="h-4 w-4" />
+                        </Button>
                         {member.estado_pago === "PENDIENTE" && (
                           <>
                             <Button
@@ -482,6 +514,17 @@ export default function AdminMembersPage() {
           </div>
         )}
       </Card>
+
+      <AdminCatalogEditModal
+        member={editingMember}
+        onClose={() => setEditingMember(null)}
+        onSaved={(updated) => {
+          setMembers((current) =>
+            current.map((item) => (item.id === updated.id ? updated : item)),
+          );
+          setFeedback({ type: "success", message: "Catálogo del miembro actualizado." });
+        }}
+      />
 
       {previewUrl && (
         <div

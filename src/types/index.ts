@@ -55,6 +55,19 @@ export interface AdminMember {
   rol: string;
   active: boolean;
   days_remaining: number;
+  institution_id: number | null;
+  career_id: number | null;
+  province_id: string | null;
+  canton_id: string | null;
+  catalog_complete: boolean;
+}
+
+export interface AdminMemberCatalogUpdate {
+  institution_id: number;
+  career_id?: number;
+  career_name?: string;
+  province_id: string;
+  canton_id: string;
 }
 
 export interface AdminMemberListResponse {
