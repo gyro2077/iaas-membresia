@@ -1,16 +1,22 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
 import { api, getStoredToken } from "@/lib/api";
+import { registerLogoutHandler } from "@/lib/authSession";
 import { useAuth } from "@/store/useAuth";
 import type { UserProfile } from "@/types";
 
 export function AuthGuard({ children }: { children: React.ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
-  const { token, user, hydrated, hydrate, setUser, clearAuth } = useAuth();
+  const { user, hydrated, hydrate, setUser, clearAuth } = useAuth();
+  const [loadingUser, setLoadingUser] = useState(true);
+
+  useEffect(() => {
+    registerLogoutHandler(clearAuth);
+  }, [clearAuth]);
 
   useEffect(() => {
     hydrate();
@@ -25,47 +31,47 @@ export function AuthGuard({ children }: { children: React.ReactNode }) {
       return;
     }
 
+    let cancelled = false;
+
     async function loadUser() {
+      setLoadingUser(true);
       try {
         const { data } = await api.get<UserProfile>("/users/me");
+        if (cancelled) return;
+
         setUser(data);
 
-        if (
-          data.debe_cambiar_password &&
-          !pathname.startsWith("/dashboard/settings")
-        ) {
+        if (data.debe_cambiar_password && !pathname.startsWith("/dashboard/settings")) {
           router.replace("/dashboard/settings?forcePassword=1");
         }
       } catch (error) {
+        if (cancelled) return;
+
         const status = (error as { response?: { status?: number } }).response?.status;
-        if (status === 403 && pathname.startsWith("/dashboard/settings")) {
+        if (status === 401) {
+          clearAuth();
+          router.replace("/login");
           return;
         }
-        if (status === 403) {
+        if (status === 403 && !pathname.startsWith("/dashboard/settings")) {
           router.replace("/dashboard/settings?forcePassword=1");
           return;
         }
         clearAuth();
         router.replace("/login");
+      } finally {
+        if (!cancelled) setLoadingUser(false);
       }
     }
 
-    if (!user) {
-      void loadUser();
-    }
-  }, [hydrated, token, user, pathname, router, setUser, clearAuth]);
+    void loadUser();
 
-  const isPasswordSettings = pathname.startsWith("/dashboard/settings");
+    return () => {
+      cancelled = true;
+    };
+  }, [hydrated, pathname, router, setUser, clearAuth]);
 
-  if (!hydrated || !getStoredToken()) {
-    return (
-      <div className="flex min-h-[50vh] items-center justify-center text-iaas-earth">
-        Cargando sesión...
-      </div>
-    );
-  }
-
-  if (!user && !isPasswordSettings) {
+  if (!hydrated || !getStoredToken() || loadingUser || !user) {
     return (
       <div className="flex min-h-[50vh] items-center justify-center text-iaas-earth">
         Cargando sesión...

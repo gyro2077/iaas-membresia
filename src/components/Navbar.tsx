@@ -5,36 +5,18 @@ import { usePathname } from "next/navigation";
 import { Leaf, LogOut, Shield, User } from "lucide-react";
 
 import { Button } from "@/components/ui/button";
-import { api } from "@/lib/api";
 import { cn } from "@/lib/utils";
 import { selectIsAdmin, useAuth } from "@/store/useAuth";
-import type { UserProfile } from "@/types";
 
 export function Navbar() {
   const pathname = usePathname();
-  const { user, token, hydrated, clearAuth, setUser } = useAuth();
+  const { user, token, hydrated, clearAuth } = useAuth();
   const isAdmin = useAuth(selectIsAdmin);
 
-  async function handleLogout() {
+  function handleLogout() {
     clearAuth();
     window.location.href = "/";
   }
-
-  async function refreshUser() {
-    if (!token) return;
-    try {
-      const { data } = await api.get<UserProfile>("/users/me");
-      setUser(data);
-    } catch {
-      clearAuth();
-    }
-  }
-
-  if (hydrated && token && !user) {
-    void refreshUser();
-  }
-
-  const isPrivate = pathname.startsWith("/dashboard") || pathname.startsWith("/admin");
 
   return (
     <header className="border-b border-iaas-earth/10 bg-white/90 backdrop-blur">
@@ -45,7 +27,7 @@ export function Navbar() {
         </Link>
 
         <nav className="flex items-center gap-2 text-sm">
-          {!token && (
+          {hydrated && !token && (
             <>
               <Link
                 href="/login"
@@ -62,7 +44,7 @@ export function Navbar() {
             </>
           )}
 
-          {token && (
+          {hydrated && token && user && (
             <>
               <Link
                 href="/dashboard"
@@ -86,12 +68,10 @@ export function Navbar() {
                   Admin
                 </Link>
               )}
-              {!isPrivate && (
-                <Button variant="ghost" size="sm" onClick={handleLogout}>
-                  <LogOut className="mr-1 h-4 w-4" />
-                  Salir
-                </Button>
-              )}
+              <Button variant="ghost" size="sm" onClick={handleLogout}>
+                <LogOut className="mr-1 h-4 w-4" />
+                Salir
+              </Button>
             </>
           )}
         </nav>

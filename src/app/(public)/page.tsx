@@ -48,6 +48,13 @@ export default function HomePage() {
           Ingresa tu correo institucional para conocer el estado de tu membresía sin necesidad de
           iniciar sesión.
         </p>
+        <p className="mx-auto mt-3 max-w-2xl rounded-lg bg-iaas-light px-4 py-2 text-sm text-iaas-green">
+          ¿Primera vez en la plataforma?{" "}
+          <Link href="/login" className="font-semibold underline-offset-2 hover:underline">
+            Inicia sesión
+          </Link>{" "}
+          con la contraseña temporal <strong>IAAS2026!</strong> — deberás cambiarla al entrar.
+        </p>
       </section>
 
       <Card className="mx-auto max-w-2xl">
