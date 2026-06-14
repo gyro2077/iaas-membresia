@@ -45,7 +45,7 @@ export default function HomePage() {
           Verifica tu membresía IAAS
         </h1>
         <p className="mx-auto mt-4 max-w-2xl text-iaas-earth/90">
-          Ingresa tu correo institucional para conocer el estado de tu membresía sin necesidad de
+          Ingresa tu correo con el que te registraste (personal o institucional) para conocer el estado de tu membresía sin necesidad de
           iniciar sesión.
         </p>
 
@@ -62,11 +62,6 @@ export default function HomePage() {
             </Button>
           </Link>
         </div>
-
-        <p className="mx-auto mt-4 max-w-2xl rounded-lg bg-iaas-light px-4 py-2 text-sm text-iaas-green">
-          ¿Primera vez? Usa la contraseña temporal <strong>IAAS2026!</strong> al ingresar — deberás
-          cambiarla en tu primer acceso.
-        </p>
       </section>
 
       <Card className="mx-auto max-w-2xl">

@@ -78,7 +78,7 @@ export default function LoginPage() {
             <p className="font-semibold">Primer acceso — contraseña temporal</p>
             <p className="mt-1 leading-relaxed">
               Miembros: contraseña temporal <strong>IAAS2026!</strong> (deberás cambiarla al
-              entrar). Administradores: <strong>AdminIAAS2026!</strong>
+              entrar).
             </p>
           </div>
         </div>

@@ -48,9 +48,7 @@ export function Footer() {
             International Association of Students in Agricultural and Related Sciences (IAAS)
           </p>
           <p className="mx-auto mt-2 max-w-3xl leading-relaxed text-iaas-earth/90">
-            Red global de clubes y capítulos universitarios de estudiantes en agronomía, silvicultura
-            y ciencias ambientales. Una de las organizaciones juveniles más grandes del mundo en estos
-            campos.
+            IAAS (Asociación Internacional de Estudiantes de Ciencias Agrícolas y Afines) es la red estudiantil y de jóvenes profesionales más grande del mundo en el sector agrícola.
           </p>
         </div>
 
